@@ -1,6 +1,6 @@
 RedisDb        = require("/RedisDb")
 
-RedisLua_VERBOSE = true
+RedisLua_VERBOSE = false
 
 -- Methods container
 local _Redis = {}

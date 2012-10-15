@@ -5,7 +5,7 @@ require "busted"
 
 -- Verbose mode
 RedisLua_VERBOSE = true
-RedisDb_VERBOSE = true
+-- RedisDb_VERBOSE = true
 local r = nil
 
 

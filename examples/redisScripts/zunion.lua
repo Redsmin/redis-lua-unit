@@ -1,6 +1,6 @@
--- zunion numkeys key [key ..] [COMMAND command]
--- zunion v1 - MIT LICENSE
--- Francois-Guillaume Ribreau @FGRibreau https://redsmin.com
+-- zunion numkeys key [key ..]
+-- simple zunion - MIT LICENSE
+-- Francois-Guillaume Ribreau @FGRibreau https://redsmin.com http://brin.gr
 
 local expire = 5*60; -- expire after 5 minutes
 local lgth = #KEYS;

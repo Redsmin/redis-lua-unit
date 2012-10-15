@@ -5,8 +5,8 @@ require "redis-mock"
 require "busted"
 
 -- Verbose mode
-RedisLua_VERBOSE = true
-RedisDb_VERBOSE = true
+-- RedisLua_VERBOSE = true
+-- RedisDb_VERBOSE = true
 
 local r = nil
 

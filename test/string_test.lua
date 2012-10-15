@@ -7,7 +7,7 @@ require("redis-mock")
 require "busted"
 
 -- Verbose mode
-RedisLua_VERBOSE = true
+-- RedisLua_VERBOSE = true
 
 describe("RedisDb String", function()
 
