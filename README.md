@@ -14,10 +14,56 @@ If you don't have the `luarocks` package manager installed run (change the defau
 
 Or on OSX `brew install luarocks`
 
+Usage
+-----
+
+`redis-lua-unit` is framework agnostic and may be used with anything. The following examples will be written with (busted)[http://olivinelabs.com/busted/].
+
+```lua
+
+    -- include redis-mock
+    require "redis-mock"
+    -- include your favorite unit-testing framework
+    require "busted"
+
+
+    describe("Testing redis-lua-unit", function()
+
+      before_each(function()
+        -- RedisDb Mock instance (the script will be able to call redis.call, redis.pcall, ...)
+        redis = Redis()
+      end)
+
+      it("should return the cached version when the sha1hex(keys) already exist", function()
+        -- Keys that will be forwarded to the script
+        KEYS = {"b:nm:1350247717260", "b:nm:1350247710000"}
+
+        -- Each redis command is available through redis.db:COMMAND
+        -- if it isn't feel free to submit a pull-request
+        redis.db:zadd("zunion:sha1hex", 2, "two", 1, "one" , 3, "three")
+
+        spy.on(r.db, "exists")
+
+        -- runScript require {filename, redis, KEYS}
+        -- + filename {string} path of the redis lua script
+        -- + redis {"object"} returned by the globally available Redis() constructor
+        -- + KEYS {table} arguments that the script will take
+        runScript {filename="redisScripts/zunion.lua", redis=redis, KEYS=KEYS}
+
+        -- Check
+        assert.spy(r.db.exists).was.called())
+      end)
+
+    end)
+```
+
+More examples are available in `examples/`.
+
 Supported
 ---------
 
 We accept pull-request !
+
 
     # lua
     [~] call
