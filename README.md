@@ -32,6 +32,7 @@ runScript, Redis = require("redis-mock")
 -- include your favorite unit-testing framework
 require "busted"
 
+local redis = nil
 
 describe("Testing redis-lua-unit", function()
 
