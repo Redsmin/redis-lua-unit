@@ -49,7 +49,7 @@ describe("Testing redis-lua-unit", function()
     -- if it isn't feel free to submit a pull-request
     redis.db:zadd("zunion:sha1hex", 2, "two", 1, "one" , 3, "three")
 
-    spy.on(r.db, "exists")
+    spy.on(redis.db, "exists")
 
     -- runScript require {filename, redis, KEYS}
     -- + filename {string} path of the redis lua script
@@ -58,7 +58,7 @@ describe("Testing redis-lua-unit", function()
     runScript {filename="redisScripts/zunion.lua", redis=redis, KEYS=KEYS}
 
     -- Check
-    assert.spy(r.db.exists).was.called())
+    assert.spy(redis.db.exists).was.called())
   end)
 
 end)
