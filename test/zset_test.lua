@@ -58,7 +58,25 @@ describe("RedisDb Sorted set", function()
       -- Check
       assert.are.same(ret, {{"three", 3}, {"two", 2}, {"one", 1}})
     end)
+  end)
 
+  describe("zunionstore", function()
+    before_each(function()
+      -- RedisDb Mock instance
+      r = Redis()
+    end)
 
+    it("should return the specified range of elements (value) in the sorted set stored at key", function()
+      -- Setup
+      r.db:zadd("myzset1", 10, "marc", 1, "paul", 8, "max", 3, "marie", 14, "jean")
+      r.db:zadd("myzset2", 10, "silvia", 15, "manon", 9, "maxwell", 1, "marc")
+
+      -- Test
+      local ret = r.db:zunionstore("out", 2, "myzset1", "myzset2")
+      local zset = r.db:zrevrange("out", 0, -1, 'WITHSCORES')
+
+      -- Check
+      assert.same(zset, { { "manon", 15 }, { "jean", 14 }, { "marc", 11 }, { "silvia", 10 }, { "maxwell", 9 }, { "max", 8 }, { "marie", 3 }, { "paul", 1 } })
+    end)
   end)
 end)

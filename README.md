@@ -170,7 +170,7 @@ We accept pull-requests !
     [ ] srandmember
     [ ] srem
     [ ] sunion
-    [ ] sunionstore
+    [~] sunionstore
 
     # sorted sets
     [x] zadd

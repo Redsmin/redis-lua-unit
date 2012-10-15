@@ -1,6 +1,8 @@
 -- Implementation: self[key].value = {{"plop",10}, {"hey",12}, {"hello",1}}
 
 return (function(RedisDb)
+  local MEMBER = 1
+  local SCORE = 2
 
   -- local zadd = function(self, key, ...)
   function RedisDb:zadd(key, ...)
@@ -38,7 +40,10 @@ return (function(RedisDb)
 
     end
 
-    table.sort(self[key].value, function(a,b)  return a[2] > b[2] end)
+    -- sort the sorted-set
+    table.sort(zset, function(a,b)  return a[SCORE] > b[SCORE] end)
+
+
     return RedisDb.printCmd(self, 'zadd', key, unpack(args), #self[key].value - oldSize)
   end
 
@@ -73,6 +78,47 @@ return (function(RedisDb)
     end
 
     return RedisDb.printCmd(self, 'zrevrange', key, _start, _stop, withscores or "", ret)
+  end
+
+  -- ZUNIONSTORE destination numkeys key [key ...] [WEIGHTS weight [weight ...]] [AGGREGATE SUM|MIN|MAX]
+  -- Return: the number of elements in the resulting sorted set at destination.
+  -- @todo support [WEIGHTS weight [weight ...]] [AGGREGATE SUM|MIN|MAX]
+  function RedisDb:zunionstore(destination, numkeys, ...)
+    local keys = {...}
+    local hash = {}
+
+    for i=1, numkeys do
+      assert(keys[i], "numkeys must specify the right number of specified keys")
+
+      local zset = RedisDb.zrevrange(self, keys[i], 0, -1, "WITHSCORES")
+
+      if(zset) then
+
+        -- loop over the members and add them to the hash
+        for i=1,#zset do
+
+          local member = zset[i][MEMBER]
+          local score = zset[i][SCORE]
+
+          if(not hash[member]) then
+            hash[member] = score
+          else
+            hash[member] = hash[member] + score
+          end
+
+        end -- end loop
+
+      end -- end if zset
+
+    end
+
+    -- add into the destination zset
+    -- @todo do only one zadd() call
+    for member,score in pairs(hash) do
+      RedisDb.zadd(self, destination, score, member)
+    end
+
+    return RedisDb.printCmd(self, 'zunionstore', destination, numkeys, unpack(keys), true)
   end
 
 

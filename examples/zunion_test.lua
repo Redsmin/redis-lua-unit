@@ -30,16 +30,14 @@ describe("Zunion without range args", function()
     KEYS = {"b:nm:1350247717260", "b:nm:1350248810000"}
 
     -- Setup
-    r.db:zadd("b:nm:1350247717260", 10, "marc", 1, "paul", 9, "max", 3, "marie", 14, "jean")
-    r.db:zadd("b:nm:1350248810000", 10, "silvia", 1, "manon", 9, "maxwell", 1, "marc")
-
+    r.db:zadd("b:nm:1350247717260", 10, "marc", 1, "paul", 8, "max", 3, "marie", 14, "jean")
+    r.db:zadd("b:nm:1350248810000", 10, "silvia", 15, "manon", 9, "maxwell", 1, "marc")
 
     -- Run
     local ret = runScript {filename="redisScripts/zunion.lua", redis=r, KEYS=KEYS}
 
     -- Test
-    assert.same(ret, {})
-    -- assert.spy(r.db.exists).called_with(r.db, "zunion:sha1hex")
+    assert.same(ret, { { "manon", 15 }, { "jean", 14 }, { "marc", 11 }, { "silvia", 10 }, { "maxwell", 9 }, { "max", 8 }, { "marie", 3 }, { "paul", 1 } })
   end)
 
 end)
