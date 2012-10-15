@@ -1,6 +1,5 @@
-RedisDb        = require("/RedisDb")
-
-RedisLua_VERBOSE = false
+-- RedisLua.lua
+-- Mock the "redis" object available from the LUA Script
 
 -- Methods container
 local _Redis = {}
@@ -20,7 +19,7 @@ local call = function(self)
 
     local ret = self.db[cmd](self.db, unpack(arg))
 
-    if RedisLua_VERBOSE then
+    if self.RedisLua_VERBOSE then
       print(cmd .. "( " .. table.concat(arg, " ") .. " ) === ".. tostring(ret))
     end
 
@@ -29,6 +28,7 @@ local call = function(self)
 end
 
 local pcall = function(self)
+  -- @todo better version
   return call(self)
 end
 
@@ -40,17 +40,13 @@ local sha1hex = function(self)
   end)
 end
 
-local methods = {
-  call    = call
-, pcall   = pcall
-, sha1hex = sha1hex
-}
+local RedisDb  = require("/RedisDb")
 
 -- Constructor
 local function RedisLua()
   local obj = {}
   obj.db = RedisDb()
-
+  obj.RedisLua_VERBOSE = false
   obj.call    = call(obj)
   obj.pcall   = pcall(obj)
   obj.sha1hex = sha1hex(obj)

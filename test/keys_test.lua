@@ -1,7 +1,6 @@
--- support relative path
 package.path = package.path .. ";../?.lua;../src/?.lua"
 
-require "redis-mock"
+local runScript, Redis = require("redis-mock")()
 require "busted"
 
 -- Verbose mode

@@ -1,14 +1,19 @@
-local lfs    = require "lfs"
+local lfs       = require "lfs"
+local Redis     = require("/RedisLua")
 
--- package.path = package.path .. ";../?.lua;../src/?.lua"
-
-Redis        = require("/RedisLua")
+package.path = package.path .. ";../?.lua;../src/?.lua"
 
 -- Runscript
-runScript = function(arg)
-  -- quick&dirty find a way to explain keys & redis in their own context
-  KEYS = arg.KEYS
-  redis = arg.redis
-  local f = assert(loadfile(lfs.currentdir() .. "/" .. arg.filename))
+local runScript = function(args)
+  assert(type(args) == "table",  "Call runScript with a table like this: runScript {filename=\"/my/script.lua\", redis=redis, KEYS=KEYS}")
+
+  -- quick&dirty find a way to provide keys & redis inside their own context
+  KEYS = args.KEYS
+  redis = args.redis
+  local f = assert(loadfile(lfs.currentdir() .. "/" .. args.filename), "Couldn't load ".. lfs.currentdir() .. "/" .. args.filename)
   return f()
 end
+
+return (function()
+  return runScript, Redis
+end)

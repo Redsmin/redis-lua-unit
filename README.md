@@ -28,7 +28,7 @@ Usage
 ```lua
 
 -- include redis-mock
-require "redis-mock"
+runScript, Redis = require("redis-mock")
 -- include your favorite unit-testing framework
 require "busted"
 
