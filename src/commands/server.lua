@@ -1,6 +1,6 @@
-return (function(methods)
+return (function(RedisDb)
 
-  function methods:flushdb()
+  function RedisDb:flushdb()
     for k,_ in pairs(self) do self[k] = nil end
     return true
   end

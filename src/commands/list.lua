@@ -1,3 +1,3 @@
-return (function(methods)
+return (function(RedisDb)
 
 end)
