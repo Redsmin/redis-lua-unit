@@ -6,9 +6,43 @@ local db = {}
 RedisDb_VERBOSE = false
 
 --- Helpers
+-- http://lua-users.org/wiki/TableSerialization
+function table_print (tt, indent, done)
+  done = done or {}
+  indent = indent or 0
+  local isFirst = true
+  if type(tt) == "table" then
+    local sb = {}
+    for key, value in pairs (tt) do
+      table.insert(sb, string.rep (" ", indent)) -- indent it
+      if type (value) == "table" and not done [value] then
+        done [value] = true
+        table.insert(sb, "{\n");
+        table.insert(sb, table_print (value, indent + 2, done))
+        table.insert(sb, string.rep (" ", indent)) -- indent it
+        table.insert(sb, "}\n");
+      elseif "number" == type(key) then
+        if(isFirst) then
+          isFirst = false
+          table.insert(sb, string.format("\"%s\"", tostring(value)))
+        else
+          table.insert(sb, string.format(",\"%s\"\n", tostring(value)))
+        end
+      else
+        table.insert(sb, string.format(
+            "%s = \"%s\"\n", tostring (key), tostring(value)))
+       end
+    end
+    return table.concat(sb)
+  else
+    return tt .. "\n"
+  end
+end
+
+
 local xgetr = function(self,k,ktype)
   if self[k] then
-    assert(self[k].ktype == ktype)
+    assert(self[k].ktype == ktype, "xgetr ktype(".. k .."): ".. self[k].ktype.." === ".. ktype)
     assert(self[k].value)
     return self[k].value
   else return {} end
@@ -38,10 +72,20 @@ local printCmd = function(self, cmd, ...)
   end
 
   local returnValue = args[#args]
+  local printedValue = returnValue
+
+  if(type(printedValue) == "table") then
+    printedValue = table_print(printedValue)
+  else
+    printedValue = tostring(printedValue)
+  end
+
 
   if RedisDb_VERBOSE then
-    print(cmd .. "(" .. table.concat(args, ", ", 1, #args-1) .. ") === " .. tostring(returnValue))
+    print(cmd .. "(" .. table.concat(args, ", ", 1, #args-1) .. ") === " .. printedValue)
   end
+
+
 
   return returnValue
 end
@@ -71,10 +115,14 @@ local _type = function(self,k)
 end
 
 local expire = function(self, key, seconds)
-  if(not self.exists(self, key)) then return printCmd(self, 'expire', key, seconds, false) end
+  local ret = false
 
-  self[key].expire = seconds
-  return printCmd(self, 'expire', key, seconds, true)
+  if(exists(self, key)) then
+    self[key].expire = seconds
+    ret = true
+  end
+
+  return printCmd(self, 'expire', key, seconds, ret)
 end
 
 -- Integer reply: TTL in seconds or -1 when key does not exist or does not have a timeout.
@@ -91,7 +139,6 @@ end
 local get = function(self,key)
   local x = xgetr(self, key, "string")
   local returnValue = x[1]
-  print("returnValue", returnValue)
   return printCmd(self, 'get', key, returnValue or false)
 end
 
@@ -141,17 +188,19 @@ local hset = function(self,k,k2,v)
 end
 
 -- sorted set
+-- Implementation: self[key].value = {{"plop",10}, {"hey",12}, {"hello",1}}
 
 local zadd = function(self, key, ...)
   local args = {...}
-  assert(#args > 0)
+  assert(#args > 0, "zadd require at least on pair of score/member")
 
   -- create the sorted set if it doesn't not exist
   if(not exists(self, key)) then
-    self[key] = {ktype="zset",value={}}
+    self[key] = {ktype="zset",value={}, _members={}}
   end
 
-  local ret = 0
+  local zset = self[key].value
+  local oldSize = #self[key].value
 
   for i=1,#args, 2 do
     local score = tonumber(args[i])
@@ -160,17 +209,58 @@ local zadd = function(self, key, ...)
     assert(type(score) == "number", "Score must be a number")
     assert(type(member) == "string", "Member must be a number")
 
-    if(not self[key].value[member]) then
-      self[key].value[member] = score
-      ret = ret + 1
+    if(not zset[member]) then
+      table.insert(self[key]._members, member)
+      table.insert(zset, {member, score})
     else
-      self[key].value[member] = score + self[key].value[member]
+      -- linear lookup
+
+      for curMember,oldScore in pairs(zset) do
+        if(zset[curMember][1] == member) then
+          zset[member].score = oldScore + score
+          break
+        end
+      end
     end
 
-    table.sort(self[key].value)
   end
 
-  return ret
+  table.sort(self[key].value, function(a,b)  return a[2] > b[2] end)
+  return printCmd(self, 'zadd', key, unpack(args), #self[key].value - oldSize)
+end
+
+local zrevrange = function(self, key, _start, _stop, withscores)
+  local ret = {}
+
+  start = tonumber(_start)
+  stop  = tonumber(_stop)
+
+  assert(type(key)   == "string", "key is required")
+  assert(type(start) == "number", "start is required")
+  assert(type(stop)  == "number", "stop is required")
+
+  if(not withscores or not type(withscores) == "string") then
+    withscores = nil
+  end
+
+  if(exists(self, key)) then
+    local zset = xgetr(self, key, "zset")
+    start = start + 1
+    if(stop == -1 or stop+1 > #zset)then stop = #zset else stop = stop + 1 end
+
+
+    -- @todo - optimize that
+    for i=start,stop do
+      if(not withscores) then
+          table.insert(ret, zset[i][1]) -- only insert the member
+        else
+          table.insert(ret, zset[i])
+        end
+    end
+  else
+  end
+
+  return printCmd(self, 'zrevrange', key, _start, _stop, withscores or "", ret)
 end
 
 -- connection
@@ -208,6 +298,7 @@ local methods = {
   hset     = hset,
   -- sorted set
   zadd     = zadd,
+  zrevrange = zrevrange,
   -- connection
   echo     = echo,
   ping     = ping,

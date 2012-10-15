@@ -9,7 +9,7 @@ local name = "zunion:" .. redis.sha1hex(table.concat(KEYS))
 
 local function getResults()
   -- return the result from the biggest to the lowest
-  return redis.call('ZREVRANGE', name, 0, 10, 'WITHSCORES')
+  return redis.call('zrevrange', name, 0, 10, 'WITHSCORES')
 end
 
 -- If the key already exist returns it
