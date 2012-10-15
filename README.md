@@ -237,9 +237,15 @@ We accept pull-request !
 
 Authors
 -------
-[@fgribreau](http://twitter.com/FGRibreau) sponsored by [Bringr](http://brin.gr) and [Redsmin](https://redsmin.com)
-Original work from [@pchapuis](http://twitter.com/pchapuis) [fakeredis](https://github.com/catwell/cw-lua/tree/master/fakeredis)
-redis-lua-unit
+
+* [Francois-Guillaume Ribreau](http://twitter.com/FGRibreau)
+* Original work from [@pchapuis](http://twitter.com/pchapuis) [fakeredis](https://github.com/catwell/cw-lua/tree/master/fakeredis)
+
+Sponsor
+-------
+This project is sponsored by:
+* [Redsmin](https://redsmin.com): Full featured GUI that provides online real-time visualization and administration service for Redis.
+* [Bringr](http://brin.gr): filter, observe, understand the real-time social web
 
 Copyright and license
 ---------------------
