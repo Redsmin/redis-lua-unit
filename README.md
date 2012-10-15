@@ -54,7 +54,8 @@ describe("Testing redis-lua-unit", function()
     -- runScript require {filename, redis, KEYS}
     -- + filename {string} path of the redis lua script
     -- + redis {"object"} returned by the globally available Redis() constructor
-    -- + KEYS {table} arguments that the script will take
+    -- + [KEYS] {table} key names
+    -- + [ARGV] {table} additional arguments
     runScript {filename="redisScripts/zunion.lua", redis=redis, KEYS=KEYS}
 
     -- Check
