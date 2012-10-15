@@ -68,7 +68,7 @@ More examples are available in `examples/`.
 Supported
 ---------
 
-We accept pull-request !
+We accept pull-requests !
 
 
     # lua
