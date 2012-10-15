@@ -1,6 +1,3 @@
-local lfs    = require "lfs"
-
--- support relative path
 package.path = package.path .. ";../?.lua;../src/?.lua"
 
 require("redis-mock")
@@ -8,14 +5,45 @@ require "busted"
 
 -- Verbose mode
 RedisLua_VERBOSE = true
+RedisDb_VERBOSE = true
+local r = nil
+
+function table_print (tt, indent, done)
+  done = done or {}
+  indent = indent or 0
+  if type(tt) == "table" then
+    local sb = {}
+    for key, value in pairs (tt) do
+      table.insert(sb, string.rep (" ", indent)) -- indent it
+      if type (value) == "table" and not done [value] then
+        done [value] = true
+        table.insert(sb, "{\n");
+        table.insert(sb, table_print (value, indent + 2, done))
+        table.insert(sb, string.rep (" ", indent)) -- indent it
+        table.insert(sb, "}\n");
+      elseif "number" == type(key) then
+        table.insert(sb, string.format("\"%s\"\n", tostring(value)))
+      else
+        table.insert(sb, string.format(
+            "%s = \"%s\"\n", tostring (key), tostring(value)))
+       end
+    end
+    return table.concat(sb)
+  else
+    return tt .. "\n"
+  end
+end
+
 
 describe("Zunion without range args", function()
 
-  describe("should be awesome", function()
-    it("should return the cached version", function()
+  before_each(function()
+    -- RedisDb Mock instance
+    r = Redis()
+  end)
 
-      -- RedisDb Mock instance
-      r = Redis()
+  describe("should be awesome", function()
+    it("should return the cached version when the sha1hex(keys) already exist", function()
 
       -- Keys
       KEYS = {"b:nm:1350247717260", "b:nm:1350247710000"}
@@ -28,33 +56,27 @@ describe("Zunion without range args", function()
       runScript {filename="redisScripts/zunion.lua", redis=r, KEYS=KEYS}
 
       -- Test
-      assert.spy(r.db.exists).was.called()
-      -- assert.spy(r.db.exists).was.called_with("zunion:sha1hex")
+      assert.same(assert.spy(r.db.exists).payload.calls[3], "zunion:sha1hex")
     end)
+
+    it("should compute the zunion otherwise", function()
+
+      -- Keys
+      KEYS = {"b:nm:1350247717260", "b:nm:1350248810000"}
+
+      -- Setup
+      -- r.db:zadd("b:nm:1350247717260", 10, "marc", 1, "paul", 9, "max", 3, "marie", 14, "jean")
+      -- r.db:zadd("b:nm:1350248810000", 10, "silvia", 1, "manon", 9, "maxwell", 1, "marc")
+      spy.on(r.db, "exists")
+
+      -- Run
+      runScript {filename="redisScripts/zunion.lua", redis=r, KEYS=KEYS}
+
+      -- Test
+      assert.same(assert.spy(r.db.exists).payload.calls[3], "zunion:sha1hex")
+      -- assert.spy(r.db.exists).called_with(r.db, "zunion:sha1hex")
+    end)
+
   end)
-
-  -- describe("should be awesome", function()
-  --   it("should be easy to use", function()
-  --     assert.truthy("Yup.")
-  --   end)
-
-  --   it("should have lots of features", function()
-  --     -- deep check comparisons!
-  --     assert.are.same({ table = "great"}, { table = "great" })
-
-  --     -- or check by reference!
-  --     assert.are_not.equal({ table = "great"}, { table = "great"})
-  --     assert.falsy(nil)
-  --     assert.has.error(function() error("Wat") end, "Wat")
-  --   end)
-
-  --   it("should provide some shortcuts to common functions", function()
-  --     assert.are.unique({{ thing = 1 }, { thing = 2 }, { thing = 3 }})
-  --   end)
-
-  --   it("should have mocks and spies for functional tests", function()
-  --     assert.falsy(nil)
-  --   end)
-  -- end)
 
 end)

@@ -1,8 +1,9 @@
---- Original version from https://github.com/catwell/cw-lua/tree/master/fakeredis
---- By Pierre Chapuis
+--- Original version from https://github.com/catwell/cw-lua/tree/master/fakeredis by Pierre Chapuis
 
 -- RedisDb mock
 local db = {}
+
+RedisDb_VERBOSE = false
 
 --- Helpers
 local xgetr = function(self,k,ktype)
@@ -26,6 +27,25 @@ local empty = function(self,k)
   return #self[k].value == 0
 end
 
+-- first parameter is the self, then the command name, then option arguments
+-- last parameter is the returned value
+-- printCmd(self, cmd, [optional arguments], returnValue)
+local printCmd = function(self, cmd, ...)
+  local args = {...}
+
+  if(#args == 0) then
+    args = {}
+  end
+
+  local returnValue = args[#args]
+
+  if RedisDb_VERBOSE then
+    print(cmd .. "(" .. table.concat(args, ", ", 1, #args-1) .. ") === " .. tostring(returnValue))
+  end
+
+  return returnValue
+end
+
 --- Commands
 
 -- keys
@@ -40,8 +60,10 @@ local del = function(self,...)
   return r
 end
 
-local exists = function(self,k)
-  return not not self[k]
+local exists = function(self,key)
+  local returnValue = not not self[key]
+
+  return printCmd(self, 'exists', key, returnValue)
 end
 
 local _type = function(self,k)
@@ -49,30 +71,34 @@ local _type = function(self,k)
 end
 
 local expire = function(self, key, seconds)
-  if(not self.exists(self, key)) then return false end
+  if(not self.exists(self, key)) then return printCmd(self, 'expire', key, seconds, false) end
 
   self[key].expire = seconds
-  return true
+  return printCmd(self, 'expire', key, seconds, true)
 end
 
 -- Integer reply: TTL in seconds or -1 when key does not exist or does not have a timeout.
 local ttl = function(self, key)
-  if(not self.exists(self, key) or not self[key].expire) then return false end
+  if(not self.exists(self, key) or not self[key].expire) then return printCmd(self, 'ttl', key, false) end
 
-  return self[key].expire
+  local returnValue = self[key].expire
+
+  return printCmd(self, 'ttl', key, returnValue)
 end
 
 -- strings
 
-local get = function(self,k)
-  local x = xgetr(self,k,"string")
-  return x[1]
+local get = function(self,key)
+  local x = xgetr(self, key, "string")
+  local returnValue = x[1]
+  print("returnValue", returnValue)
+  return printCmd(self, 'get', key, returnValue or false)
 end
 
-local set = function(self,k,v)
+local set = function(self, key, v)
   assert(type(v) == "string")
-  self[k] = {ktype="string",value={v}}
-  return true
+  self[key] = {ktype="string",value={v}}
+  return printCmd(self, 'set', key, v, true)
 end
 
 local strlen = function(self,k)
@@ -114,8 +140,40 @@ local hset = function(self,k,k2,v)
   return true
 end
 
--- connection
+-- sorted set
 
+local zadd = function(self, key, ...)
+  local args = {...}
+  assert(#args > 0)
+
+  -- create the sorted set if it doesn't not exist
+  if(not exists(self, key)) then
+    self[key] = {ktype="zset",value={}}
+  end
+
+  local ret = 0
+
+  for i=1,#args, 2 do
+    local score = tonumber(args[i])
+    local member = tostring(args[i+1])
+
+    assert(type(score) == "number", "Score must be a number")
+    assert(type(member) == "string", "Member must be a number")
+
+    if(not self[key].value[member]) then
+      self[key].value[member] = score
+      ret = ret + 1
+    else
+      self[key].value[member] = score + self[key].value[member]
+    end
+
+    table.sort(self[key].value)
+  end
+
+  return ret
+end
+
+-- connection
 local echo = function(self,v)
   assert(type(v) == "string")
   return v
@@ -148,6 +206,8 @@ local methods = {
   hexists  = hexists,
   hget     = hget,
   hset     = hset,
+  -- sorted set
+  zadd     = zadd,
   -- connection
   echo     = echo,
   ping     = ping,
