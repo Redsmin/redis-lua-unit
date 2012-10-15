@@ -11,16 +11,13 @@ RedisDb_VERBOSE = true
 local r = nil
 
 describe("RedisDb Sorted set", function()
-  before_each(function()
-    -- RedisDb Mock instance
-    r = Redis()
-  end)
-
   describe("zadd", function()
-    it("should return the number elements added to the sorted sets, not including elements already existing for which the score was updated.", function()
+    before_each(function()
       -- RedisDb Mock instance
       r = Redis()
+    end)
 
+    it("should return the number elements added to the sorted sets, not including elements already existing for which the score was updated.", function()
       -- Check
       assert.are.same(r.db:exists("mySet"), false)
 

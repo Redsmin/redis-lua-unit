@@ -11,12 +11,11 @@ RedisDb_VERBOSE = true
 local r = nil
 describe("RedisDb Keys", function()
 
-  before_each(function()
-    -- RedisDb Mock instance
-    r = Redis()
-  end)
-
   describe("exists", function()
+    before_each(function()
+      -- RedisDb Mock instance
+      r = Redis()
+    end)
     it("should return true when a key exist", function()
       -- Check
       assert.are.same(r.db:exists("myKey"), false)
@@ -30,6 +29,11 @@ describe("RedisDb Keys", function()
   end)
 
   describe("expire", function()
+    before_each(function()
+      -- RedisDb Mock instance
+      r = Redis()
+    end)
+
     it("should return false if the key does not exist", function()
       assert.are.same(r.db:exists("myKey"), false)
       assert.are.same(r.db:expire("myKey", 10), false)
@@ -48,6 +52,11 @@ describe("RedisDb Keys", function()
   end)
 
   describe("ttl", function()
+    before_each(function()
+      -- RedisDb Mock instance
+      r = Redis()
+    end)
+
     it("should return false if the key does not exist", function()
       assert.are.same(r.db:ttl("myKey"), false)
     end)
@@ -70,5 +79,9 @@ describe("RedisDb Keys", function()
 
       assert.are.same(r.db:ttl("myKey"), 60)
     end)
+  end)
+
+  after_each(function()
+    r = nil
   end)
 end)
