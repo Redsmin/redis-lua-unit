@@ -6,7 +6,7 @@
 local db = {}
 
 local methods = {
-  RedisDb_VERBOSE = true
+  RedisDb_VERBOSE = false
 }
 
 --- internal
@@ -29,10 +29,6 @@ require("commands/connection")(methods)
 
 -- server
 require("commands/server")(methods)
-
-local inspect = require("inspect")
-
-print(inspect(methods))
 
 -- Constructor
 local function RedisDb()

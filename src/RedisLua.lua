@@ -45,11 +45,11 @@ local RedisDb  = require("/RedisDb")
 -- Constructor
 local function RedisLua()
   local obj = {}
-  obj.db = RedisDb()
+  obj.db               = RedisDb()
   obj.RedisLua_VERBOSE = false
-  obj.call    = call(obj)
-  obj.pcall   = pcall(obj)
-  obj.sha1hex = sha1hex(obj)
+  obj.call             = call(obj)
+  obj.pcall            = pcall(obj)
+  obj.sha1hex          = sha1hex(obj)
   return obj
 end
 

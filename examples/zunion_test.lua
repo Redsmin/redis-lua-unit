@@ -1,10 +1,5 @@
 package.path = package.path .. ";../?.lua;../src/?.lua"
-
-
 local runScript, Redis = require("redis-mock")()
-
-print(type(runScript), type(Redis))
-
 require "busted"
 
 local r = nil
@@ -30,21 +25,21 @@ describe("Zunion without range args", function()
     assert.same(assert.spy(r.db.exists).payload.calls[3], "zunion:sha1hex")
   end)
 
-  -- it("should compute the zunion otherwise", function()
-  --   -- Keys
-  --   KEYS = {"b:nm:1350247717260", "b:nm:1350248810000"}
+  it("should compute the zunion otherwise", function()
+    -- Keys
+    KEYS = {"b:nm:1350247717260", "b:nm:1350248810000"}
 
-  --   -- Setup
-  --   r.db:zadd("b:nm:1350247717260", 10, "marc", 1, "paul", 9, "max", 3, "marie", 14, "jean")
-  --   r.db:zadd("b:nm:1350248810000", 10, "silvia", 1, "manon", 9, "maxwell", 1, "marc")
+    -- Setup
+    r.db:zadd("b:nm:1350247717260", 10, "marc", 1, "paul", 9, "max", 3, "marie", 14, "jean")
+    r.db:zadd("b:nm:1350248810000", 10, "silvia", 1, "manon", 9, "maxwell", 1, "marc")
 
 
-  --   -- Run
-  --   local ret = runScript {filename="redisScripts/zunion.lua", redis=r, KEYS=KEYS}
+    -- Run
+    local ret = runScript {filename="redisScripts/zunion.lua", redis=r, KEYS=KEYS}
 
-  --   -- Test
-  --   assert.same(ret, {})
-  --   -- assert.spy(r.db.exists).called_with(r.db, "zunion:sha1hex")
-  -- end)
+    -- Test
+    assert.same(ret, {})
+    -- assert.spy(r.db.exists).called_with(r.db, "zunion:sha1hex")
+  end)
 
 end)
