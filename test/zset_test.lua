@@ -37,7 +37,7 @@ describe("RedisDb Sorted set", function()
       r = Redis()
     end)
 
-    it("should return the specified range of elements (value) in the sorted set stored at key", function()
+    it("should return all elements (value) in the sorted set stored at key", function()
       -- Setup
       local r1 = r.db:zadd("myzset", 2, "two", 1, "one" , 10, "three")
 
@@ -46,6 +46,17 @@ describe("RedisDb Sorted set", function()
 
       -- Check
       assert.are.same(ret, {"three", "two", "one"})
+    end)
+
+    it("should return the specified range of elements (value) in the sorted set stored at key", function()
+      -- Setup
+      local r1 = r.db:zadd("myzset", 10, "marc", 1, "paul", 8, "max", 3, "marie", 14, "jean", 45, "lucie")
+
+      -- Test
+      local ret = r.db:zrevrange("myzset", 0, 4)
+
+      -- Check
+      assert.are.same(ret, { "lucie", "jean", "marc", "max", "marie" })
     end)
 
     it("should return the specified range of elements (key, value) in the sorted set stored at key", function()

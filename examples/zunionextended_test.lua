@@ -1,53 +1,71 @@
--- package.path = package.path .. ";../?.lua;../src/?.lua"
+package.path = package.path .. ";../?.lua;../src/?.lua"
+local runScript, Redis = require("redis-mock")()
+require "busted"
 
--- require("redis-mock")
--- require "busted"
+local r = nil
+describe("Zunion v2 with range args", function()
 
--- -- Verbose mode
--- RedisLua_VERBOSE = true
--- -- RedisDb_VERBOSE = true
--- local r = nil
+  before_each(function()
+    -- RedisDb Mock instance
+    r = Redis()
+  end)
+
+  it("should return REVRANGE 0 4", function()
+    -- Setup
+    r.db:zadd("myzset1", 10, "marc", 1, "paul", 8, "max", 3, "marie", 14, "jean")
+    r.db:zadd("myzset2", 10, "silvia", 15, "manon", 9, "maxwell", 1, "marc", 0, "lucie")
+
+    KEYS = {"myzset1", "myzset2"}
+
+    -- Run
+    local ret = runScript {filename="redisScripts/zunionextended.lua", redis=r, KEYS=KEYS, ARGV={"REVRANGE", 0, 4}}
+
+    -- Test
+    assert.same(ret, {{ "manon", 15 },{ "jean", 14 },{ "marc", 11 },{ "silvia", 10 },{ "maxwell", 9 } })
+  end)
+
+  it("should return REVRANGE 0 -1", function()
+    -- Setup
+    r.db:zadd("myzset1", 30, "marc", 1, "paul", 8, "max", 3, "marie", 14, "jean")
+    r.db:zadd("myzset2", 10, "silvia", 15, "manon", 9, "maxwell", 1, "marc")
+
+    KEYS = {"myzset1", "myzset2"}
+    spy.on(r.db, "expire")
+
+    -- Run
+    local ret = runScript {filename="redisScripts/zunionextended.lua", redis=r, KEYS=KEYS, ARGV={"REVRANGE", 0, -1}}
 
 
--- describe("Zunion without range args", function()
+    -- Test
+    assert.same(r.db.expire.calls[1][2], "zunion:sha1hex")
+    assert.same(r.db.expire.calls[1][3], 300)
 
---   before_each(function()
---     -- RedisDb Mock instance
---     r = Redis()
---   end)
+    assert.same(ret, { { "marc", 31 }, { "manon", 15 }, { "jean", 14 }, { "silvia", 10 }, { "maxwell", 9 }, { "max", 8 }, { "marie", 3 }, { "paul", 1 } })
+  end)
 
---   it("should return the cached version when the sha1hex(keys) already exist", function()
+  it("should return the cached version", function()
+    -- Setup
+    r.db:zadd("zunion:sha1hex", 40, "marc", 1, "paul", 8, "max", 3, "marie", 14, "jean")
 
---     -- Keys
---     KEYS = {"b:nm:1350247717260", "b:nm:1350247710000"}
+    r.db:zadd("myzset1", 30, "lmarc", 1, "lpaul", 8, "lmax", 3, "lmarie", 14, "ljean")
+    r.db:zadd("myzset2", 10, "lsilvia", 15, "lmanon", 9, "lmaxwell", 1, "lmarc")
 
---     -- Setup
---     r.db:zadd("zunion:sha1hex", 2, "two", 1, "one" , 3, "three")
---     spy.on(r.db, "exists")
+    spy.on(r.db, "zunionstore")
 
---     -- Run
---     runScript {filename="redisScripts/zunion.lua", redis=r, KEYS=KEYS}
 
---     -- Test
---     assert.same(assert.spy(r.db.exists).payload.calls[3], "zunion:sha1hex")
---   end)
+    KEYS = {"myzset1", "myzset2"}
 
---   it("should compute the zunion otherwise", function()
+    local s = spy.on(r.db, "expire")
 
---     -- Keys
---     KEYS = {"b:nm:1350247717260", "b:nm:1350248810000"}
+    -- Run
+    local ret = runScript {filename="redisScripts/zunionextended.lua", redis=r, KEYS=KEYS, ARGV={"REVRANGE", 0, -1}}
 
---     -- Setup
---     -- r.db:zadd("b:nm:1350247717260", 10, "marc", 1, "paul", 9, "max", 3, "marie", 14, "jean")
---     -- r.db:zadd("b:nm:1350248810000", 10, "silvia", 1, "manon", 9, "maxwell", 1, "marc")
---     spy.on(r.db, "exists")
+    -- Test
 
---     -- Run
---     runScript {filename="redisScripts/zunion.lua", redis=r, KEYS=KEYS}
+    -- expire should not be called
+    assert.same(#r.db.expire.calls, 0)
+    -- should return zunion:sha1hex
+    assert.same(ret, {{ "marc", 40 },{ "jean", 14 },{ "max", 8 },{ "marie", 3 },{ "paul", 1 } })
+  end)
 
---     -- Test
---     assert.same(assert.spy(r.db.exists).payload.calls[3], "zunion:sha1hex")
---     -- assert.spy(r.db.exists).called_with(r.db, "zunion:sha1hex")
---   end)
-
--- end)
+end)
