@@ -2,7 +2,7 @@ Redis-lua-unit
 ==============
 --------------
 
-Redis-lua-unit - Framework agnostic unit-testing for Redis LUA scripts
+Redis-lua-unit - Framework agnostic unit-testing for Redis Lua scripts
 
 **Work in progress, pull requests are welcome!**
 
