@@ -1,8 +1,8 @@
-Redis-lua-unit
+Redis-lua-unit [![Gittip](http://badgr.co/gittip/fgribreau.png)](https://www.gittip.com/fgribreau/)
 ==============
 --------------
 
-Redis-lua-unit - Framework agnostic unit-testing for Redis LUA scripts
+Redis-lua-unit - Framework agnostic unit-testing for Redis Lua scripts
 
 **Work in progress, pull requests are welcome!**
 
@@ -29,9 +29,8 @@ Usage
 ```lua
 
 -- include redis-mock
-runScript, Redis = require("redis-mock")
+runScript, Redis = require("redis-mock")()
 -- include your favorite unit-testing framework
-require "busted"
 
 local redis = nil
 
