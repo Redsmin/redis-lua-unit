@@ -12,7 +12,8 @@ Redis-lua-unit - Framework agnostic unit-testing for Redis LUA scripts
 Installation
 ------------
 
-    luarocks install redis-lua-unit
+    wget https://raw.github.com/Redsmin/redis-lua-unit/master/redis-lua-unit-1.0-0.src.rock
+    luarocks install ./redis-lua-unit-1.0-0.src.rock
 
 If you don't have the `luarocks` package manager installed run (change the default `2.0.10` version if necessary):
 

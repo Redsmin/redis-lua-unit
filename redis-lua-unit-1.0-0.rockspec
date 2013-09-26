@@ -1,5 +1,5 @@
 package = "redis-lua-unit"
-version = "1.0.0"
+version = "1.0-0"
 source = {
   url = "https://github.com/Redsmin/redis-lua-unit/tarball/master",
   dir = "redis-lua-unit"
@@ -14,8 +14,8 @@ description = {
 }
 dependencies = {
   "lua >= 5.1",
-  "busted => 1.3-1",
-  "luafilesystem => 1.6.2-1"
+  "busted >= 1.3-1",
+  "luafilesystem >= 1.6.2-1"
 }
 build = {
   type = "builtin",
