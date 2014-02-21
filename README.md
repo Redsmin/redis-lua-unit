@@ -1,4 +1,4 @@
-Redis-lua-unit [![Gittip](http://badgr.co/gittip/fgribreau.png)](https://www.gittip.com/fgribreau/)
+Redis-lua-unit [![Gittip](http://badgr.co/gittip/fgribreau.png)](https://www.gittip.com/fgribreau/) [![Deps](https://david-dm.org/Redsmin/redis-lua-unit.png?)](https://david-dm.org/Redsmin/redis-lua-unit)
 ==============
 --------------
 
